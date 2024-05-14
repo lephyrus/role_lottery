@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="sl-theme-dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>🚧 role_lottery</title>
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    <!-- Shoelace -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css"
+    />
+
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/button/button.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/input/input.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/alert/alert.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/avatar/avatar.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/components/card/card.js"
+    ></script>
+
+    <style>
+      :root {
+        --sl-color-primary-50: rgb(254 248 250);
+        --sl-color-primary-100: rgb(253 230 239);
+        --sl-color-primary-200: rgb(252 211 227);
+        --sl-color-primary-300: rgb(250 190 213);
+        --sl-color-primary-400: rgb(248 160 194);
+        --sl-color-primary-500: rgb(245 117 166);
+        --sl-color-primary-600: rgb(241 55 127);
+        --sl-color-primary-700: rgb(209 23 95);
+        --sl-color-primary-800: rgb(174 19 79);
+        --sl-color-primary-900: rgb(126 14 57);
+        --sl-color-primary-950: rgb(80 9 36);
+
+        --sl-input-focus-ring-color: var(--sl-color-primary-300);
+      }
+
+      :root {
+        font-family: Inter, sans-serif;
+        font-feature-settings: "liga" 1, "calt" 1; /* fix for Chrome */
+        --sl-font-sans: "Inter", sans-serif;
+      }
+      @supports (font-variation-settings: normal) {
+        :root {
+          font-family: InterVariable, sans-serif;
+          --sl-font-sans: "InterVariable", sans-serif;
+        }
+      }
+    </style>
+
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script type="module" src="./priv/static/role_lottery.mjs"></script>
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
