@@ -2505,6 +2505,16 @@ function avatar(attrs) {
 function card(attrs, children) {
   return element("sl-card", attrs, children);
 }
+function icon(name) {
+  return element(
+    "sl-icon",
+    toList([
+      attribute("name", name),
+      attribute("library", "default")
+    ]),
+    toList([])
+  );
+}
 
 // build/dev/javascript/role_lottery/role_lottery.mjs
 var Model = class extends CustomType {
@@ -2557,6 +2567,18 @@ var UserEditedNewRole = class extends CustomType {
 var UserRequestedAssignment = class extends CustomType {
 };
 var UserRequestedClear = class extends CustomType {
+};
+var UserRemovedPerson = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var UserRemovedRole = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
 };
 function assign(loop$roles, loop$people, loop$assignments) {
   while (true) {
@@ -2669,6 +2691,15 @@ function view(model) {
                         h3(
                           toList([cls("text-xl font-light")]),
                           toList([text(person.name)])
+                        ),
+                        button(
+                          toList([
+                            attribute("size", "small"),
+                            attribute("circle", "true"),
+                            attribute("label", "Remove Person"),
+                            on_click(new UserRemovedPerson(person))
+                          ]),
+                          toList([icon("x-lg")])
                         )
                       ])
                     );
@@ -2726,12 +2757,26 @@ function view(model) {
                         card(
                           toList([cls("w-full text-sm")]),
                           toList([
-                            h3(
+                            div(
                               toList([
-                                cls("text-xl font-light"),
+                                cls("flex justify-between"),
                                 attribute("slot", "header")
                               ]),
-                              toList([text(role.name)])
+                              toList([
+                                h3(
+                                  toList([cls("text-xl font-light")]),
+                                  toList([text(role.name)])
+                                ),
+                                button(
+                                  toList([
+                                    attribute("size", "small"),
+                                    attribute("circle", "true"),
+                                    attribute("label", "Remove Role"),
+                                    on_click(new UserRemovedRole(role))
+                                  ]),
+                                  toList([icon("x-lg")])
+                                )
+                              ])
                             ),
                             (() => {
                               let $ = (() => {
@@ -2874,8 +2919,26 @@ function update2(model, msg) {
   } else if (msg instanceof UserRequestedAssignment) {
     let assignments = assign(model.roles, model.people, toList([]));
     return [model.withFields({ assignments }), none()];
-  } else {
+  } else if (msg instanceof UserRequestedClear) {
     return [empty_model, none()];
+  } else if (msg instanceof UserRemovedPerson) {
+    let person = msg[0];
+    let people = (() => {
+      let _pipe = model.people;
+      return filter(_pipe, (p) => {
+        return !isEqual(p, person);
+      });
+    })();
+    return [model.withFields({ people }), none()];
+  } else {
+    let role = msg[0];
+    let roles = (() => {
+      let _pipe = model.roles;
+      return filter(_pipe, (r) => {
+        return !isEqual(r, role);
+      });
+    })();
+    return [model.withFields({ roles }), none()];
   }
 }
 function main2() {

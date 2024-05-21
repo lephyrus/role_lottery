@@ -60,3 +60,14 @@ pub fn card(
 ) -> Element(msg) {
   element("sl-card", attrs, children)
 }
+
+pub fn icon(name: String) -> Element(msg) {
+  element(
+    "sl-icon",
+    [
+      attribute.attribute("name", name),
+      attribute.attribute("library", "default"),
+    ],
+    [],
+  )
+}

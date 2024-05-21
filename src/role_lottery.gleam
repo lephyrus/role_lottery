@@ -63,6 +63,8 @@ pub opaque type Msg {
   UserEditedNewRole(String)
   UserRequestedAssignment
   UserRequestedClear
+  UserRemovedPerson(Person)
+  UserRemovedRole(Role)
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -122,6 +124,18 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       #(Model(..model, assignments: assignments), effect.none())
     }
     UserRequestedClear -> #(empty_model, effect.none())
+    UserRemovedPerson(person) -> {
+      let people =
+        model.people
+        |> list.filter(fn(p) { p != person })
+      #(Model(..model, people: people), effect.none())
+    }
+    UserRemovedRole(role) -> {
+      let roles =
+        model.roles
+        |> list.filter(fn(r) { r != role })
+      #(Model(..model, roles: roles), effect.none())
+    }
   }
 }
 
@@ -179,7 +193,6 @@ fn view(model: Model) -> Element(Msg) {
             ),
             shoelace_ui.button(
               [
-                // attribute.attribute("variant", "primary"),
                 attribute.disabled(model.new_person == ""),
                 event.on_click(UserAddedPerson),
               ],
@@ -204,6 +217,15 @@ fn view(model: Model) -> Element(Msg) {
                   ),
                 ]),
                 html.h3([cls("text-xl font-light")], [element.text(person.name)]),
+                shoelace_ui.button(
+                  [
+                    attribute.attribute("size", "small"),
+                    attribute.attribute("circle", "true"),
+                    attribute.attribute("label", "Remove Person"),
+                    event.on_click(UserRemovedPerson(person)),
+                  ],
+                  [shoelace_ui.icon("x-lg")],
+                ),
               ])
             }),
           ),
@@ -223,7 +245,6 @@ fn view(model: Model) -> Element(Msg) {
             ),
             shoelace_ui.button(
               [
-                // attribute.attribute("variant", "primary"),
                 attribute.disabled(model.new_role == ""),
                 event.on_click(UserAddedRole),
               ],
@@ -235,12 +256,25 @@ fn view(model: Model) -> Element(Msg) {
             list.map(model.roles, fn(role) {
               html.li([cls("my-6 flex items-center gap-4")], [
                 shoelace_ui.card([cls("w-full text-sm")], [
-                  html.h3(
+                  html.div(
                     [
-                      cls("text-xl font-light"),
+                      cls("flex justify-between"),
                       attribute.attribute("slot", "header"),
                     ],
-                    [element.text(role.name)],
+                    [
+                      html.h3([cls("text-xl font-light")], [
+                        element.text(role.name),
+                      ]),
+                      shoelace_ui.button(
+                        [
+                          attribute.attribute("size", "small"),
+                          attribute.attribute("circle", "true"),
+                          attribute.attribute("label", "Remove Role"),
+                          event.on_click(UserRemovedRole(role)),
+                        ],
+                        [shoelace_ui.icon("x-lg")],
+                      ),
+                    ],
                   ),
                   case
                     model.assignments
