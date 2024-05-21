@@ -2434,6 +2434,10 @@ function handle_enter(event2, enter_msg, other_msg) {
     return other_msg;
   }
 }
+function get_initials(name) {
+  let _pipe = name;
+  return slice(_pipe, 0, 2);
+}
 function focus_element_by_id(id2) {
   return from2(
     (_) => {
@@ -2684,7 +2688,7 @@ function view(model) {
                           toList([
                             attribute(
                               "initials",
-                              slice(person.name, 0, 2)
+                              get_initials(person.name)
                             )
                           ])
                         ),
@@ -2797,11 +2801,7 @@ function view(model) {
                                       toList([
                                         attribute(
                                           "initials",
-                                          slice(
-                                            role$1.person.name,
-                                            0,
-                                            2
-                                          )
+                                          get_initials(role$1.person.name)
                                         ),
                                         style(
                                           toList([["--size", "1.5rem"]])
@@ -2948,7 +2948,7 @@ function main2() {
     throw makeError(
       "assignment_no_match",
       "role_lottery",
-      17,
+      16,
       "main",
       "Assignment pattern did not match",
       { value: $ }

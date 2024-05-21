@@ -1,7 +1,6 @@
 import gleam/io
 import gleam/list
-import gleam/string
-import helpers.{cls, focus_element_by_id, handle_enter, show_toast}
+import helpers.{cls, focus_element_by_id, get_initials, handle_enter, show_toast}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -211,10 +210,7 @@ fn view(model: Model) -> Element(Msg) {
             list.map(model.people, fn(person) {
               html.li([cls("my-6 flex items-center gap-4")], [
                 shoelace_ui.avatar([
-                  attribute.attribute(
-                    "initials",
-                    string.slice(from: person.name, at_index: 0, length: 2),
-                  ),
+                  attribute.attribute("initials", get_initials(person.name)),
                 ]),
                 html.h3([cls("text-xl font-light")], [element.text(person.name)]),
                 shoelace_ui.button(
@@ -285,11 +281,7 @@ fn view(model: Model) -> Element(Msg) {
                         shoelace_ui.avatar([
                           attribute.attribute(
                             "initials",
-                            string.slice(
-                              from: role.person.name,
-                              at_index: 0,
-                              length: 2,
-                            ),
+                            get_initials(role.person.name),
                           ),
                           attribute.style([#("--size", "1.5rem")]),
                         ]),

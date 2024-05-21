@@ -18,6 +18,13 @@ pub fn handle_enter(event: String, enter_msg: msg, other_msg: msg) -> msg {
   }
 }
 
+pub fn get_initials(name: String) -> String {
+  name
+  |> string.slice(0, 2)
+}
+
+// EXTERNALS -------------------------------------------------------------------
+
 pub fn focus_element_by_id(id: String) -> Effect(msg) {
   effect.from(fn(_) {
     case do_focus_element_by_id(id) {
