@@ -119,7 +119,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       effect.none(),
     )
     UserRequestedAssignment -> {
-      let assignments = assign(model.roles, model.people, [])
+      let assignments = assign(model.people, model.roles, model.people, [])
       #(Model(..model, assignments: assignments), effect.none())
     }
     UserRequestedClear -> #(empty_model, effect.none())
@@ -139,31 +139,23 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
 }
 
 fn assign(
-  roles: List(Role),
-  people: List(Person),
+  everyone: List(Person),
+  remaining_roles: List(Role),
+  remaining_people: List(Person),
   assignments: List(Assignment),
 ) -> List(Assignment) {
-  let people = case people {
-    // use full list of people again if all have been assigned a role
-    [] ->
-      assignments
-      |> list.map(fn(a) { a.person })
-      |> list.shuffle()
-    _ ->
-      people
-      |> list.shuffle()
-  }
-  case list.shuffle(roles) {
-    [] -> assignments
+  let people = list.shuffle(remaining_people)
+  let roles = list.shuffle(remaining_roles)
 
-    [role, ..remaining_roles] -> {
-      case people {
-        [] -> assignments
-        [person, ..remaining_people] -> {
-          let assignment = Assignment(role, person)
-          assign(remaining_roles, remaining_people, [assignment, ..assignments])
-        }
-      }
+  case roles, people {
+    [], _ -> assignments
+    _, [] -> assign(everyone, remaining_roles, everyone, assignments)
+    [role, ..remaining_roles], [person, ..remaining_people] -> {
+      let assignment = Assignment(role, person)
+      assign(everyone, remaining_roles, remaining_people, [
+        assignment,
+        ..assignments
+      ])
     }
   }
 }
