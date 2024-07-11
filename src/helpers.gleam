@@ -1,15 +1,5 @@
-import gleam/list
 import gleam/string
-import lustre/attribute.{type Attribute}
 import lustre/effect.{type Effect}
-
-pub fn cls(classes: String) -> Attribute(msg) {
-  attribute.classes(
-    classes
-    |> string.split(" ")
-    |> list.map(fn(cls) { #(cls, True) }),
-  )
-}
 
 pub fn handle_enter(event: String, enter_msg: msg, other_msg: msg) -> msg {
   case event {

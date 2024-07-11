@@ -1,7 +1,7 @@
 import gleam/list
-import helpers.{cls, focus_element_by_id, get_initials, handle_enter, show_toast}
+import helpers.{focus_element_by_id, get_initials, handle_enter, show_toast}
 import lustre
-import lustre/attribute
+import lustre/attribute.{class}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
@@ -164,15 +164,19 @@ fn assign(
 fn view(model: Model) -> Element(Msg) {
   // io.debug(model)
 
-  html.div([cls("h-screen flex flex-col")], [
+  html.div([class("h-screen flex flex-col")], [
     html.main(
-      [cls("w-full flex flex-row gap-6 justify-center flex-1 overflow-y-auto")],
       [
-        html.section([cls("w-full max-w-md h-full flex flex-col items-end")], [
-          html.aside([cls("w-full mt-6 flex flex-row items-baseline gap-3")], [
+        class(
+          "w-full flex flex-row gap-6 justify-center flex-1 overflow-y-auto",
+        ),
+      ],
+      [
+        html.section([class("w-full max-w-md h-full flex flex-col items-end")], [
+          html.aside([class("w-full mt-6 flex flex-row items-baseline gap-3")], [
             shoelace_ui.input(
               [
-                cls("w-full"),
+                class("w-full"),
                 attribute.id("new-person"),
                 attribute.value(model.new_person),
                 attribute.placeholder("New Person"),
@@ -197,13 +201,15 @@ fn view(model: Model) -> Element(Msg) {
             ),
           ]),
           html.ul(
-            [cls("w-full")],
+            [class("w-full")],
             list.map(model.people, fn(person) {
-              html.li([cls("my-6 flex items-center gap-4")], [
+              html.li([class("my-6 flex items-center gap-4")], [
                 shoelace_ui.avatar([
                   attribute.attribute("initials", get_initials(person.name)),
                 ]),
-                html.h3([cls("text-xl font-light")], [element.text(person.name)]),
+                html.h3([class("text-xl font-light")], [
+                  element.text(person.name),
+                ]),
                 shoelace_ui.button(
                   [
                     attribute.attribute("size", "small"),
@@ -217,77 +223,84 @@ fn view(model: Model) -> Element(Msg) {
             }),
           ),
         ]),
-        html.section([cls("w-full max-w-md h-full flex flex-col items-start")], [
-          html.aside([cls("w-full mt-6 flex flex-row items-baseline gap-3")], [
-            shoelace_ui.input(
+        html.section(
+          [class("w-full max-w-md h-full flex flex-col items-start")],
+          [
+            html.aside(
+              [class("w-full mt-6 flex flex-row items-baseline gap-3")],
               [
-                cls("w-full"),
-                attribute.id("new-role"),
-                attribute.value(model.new_role),
-                attribute.placeholder("New Role"),
-                event.on_input(UserEditedNewRole),
-                event.on_keydown(handle_enter(_, UserAddedRole, NoOp)),
+                shoelace_ui.input(
+                  [
+                    class("w-full"),
+                    attribute.id("new-role"),
+                    attribute.value(model.new_role),
+                    attribute.placeholder("New Role"),
+                    event.on_input(UserEditedNewRole),
+                    event.on_keydown(handle_enter(_, UserAddedRole, NoOp)),
+                  ],
+                  [],
+                ),
+                shoelace_ui.button(
+                  [
+                    attribute.disabled(model.new_role == ""),
+                    event.on_click(UserAddedRole),
+                  ],
+                  [element.text("Add")],
+                ),
               ],
-              [],
             ),
-            shoelace_ui.button(
-              [
-                attribute.disabled(model.new_role == ""),
-                event.on_click(UserAddedRole),
-              ],
-              [element.text("Add")],
-            ),
-          ]),
-          html.ul(
-            [cls("w-full")],
-            list.map(model.roles, fn(role) {
-              html.li([cls("my-6 flex items-center gap-4")], [
-                shoelace_ui.card([cls("w-full text-sm")], [
-                  html.div(
-                    [
-                      cls("flex justify-between"),
-                      attribute.attribute("slot", "header"),
-                    ],
-                    [
-                      html.h3([cls("text-xl font-light")], [
-                        element.text(role.name),
-                      ]),
-                      shoelace_ui.button(
-                        [
-                          attribute.attribute("size", "small"),
-                          attribute.attribute("circle", "true"),
-                          attribute.attribute("label", "Remove Role"),
-                          event.on_click(UserRemovedRole(role)),
-                        ],
-                        [shoelace_ui.icon("x-lg")],
-                      ),
-                    ],
-                  ),
-                  case
-                    model.assignments
-                    |> list.find(fn(assignment) { assignment.role == role })
-                  {
-                    Ok(role) ->
-                      html.span([cls("flex items-center gap-2")], [
-                        shoelace_ui.avatar([
-                          attribute.attribute(
-                            "initials",
-                            get_initials(role.person.name),
-                          ),
-                          attribute.style([#("--size", "1.5rem")]),
+            html.ul(
+              [class("w-full")],
+              list.map(model.roles, fn(role) {
+                html.li([class("my-6 flex items-center gap-4")], [
+                  shoelace_ui.card([class("w-full text-sm")], [
+                    html.div(
+                      [
+                        class("flex justify-between"),
+                        attribute.attribute("slot", "header"),
+                      ],
+                      [
+                        html.h3([class("text-xl font-light")], [
+                          element.text(role.name),
                         ]),
-                        element.text(role.person.name),
-                      ])
-                    _ -> html.span([cls("italic")], [element.text("Nobody")])
-                  },
-                ]),
-              ])
-            }),
-          ),
-        ]),
+                        shoelace_ui.button(
+                          [
+                            attribute.attribute("size", "small"),
+                            attribute.attribute("circle", "true"),
+                            attribute.attribute("label", "Remove Role"),
+                            event.on_click(UserRemovedRole(role)),
+                          ],
+                          [shoelace_ui.icon("x-lg")],
+                        ),
+                      ],
+                    ),
+                    case
+                      model.assignments
+                      |> list.find(fn(assignment) { assignment.role == role })
+                    {
+                      Ok(role) ->
+                        html.span([class("flex items-center gap-2")], [
+                          shoelace_ui.avatar([
+                            attribute.attribute(
+                              "initials",
+                              get_initials(role.person.name),
+                            ),
+                            attribute.style([#("--size", "1.5rem")]),
+                          ]),
+                          element.text(role.person.name),
+                        ])
+                      _ ->
+                        html.span([class("italic")], [element.text("Nobody")])
+                    },
+                  ]),
+                ])
+              }),
+            ),
+          ],
+        ),
       ],
     ),
-    html.footer([cls("w-full my-6 flex gap-4 justify-center")], [
+    html.footer([class("w-full my-6 flex gap-4 justify-center")], [
       shoelace_ui.button(
         [
           event.on_click(UserRequestedClear),
