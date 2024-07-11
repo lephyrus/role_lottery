@@ -1,4 +1,3 @@
-import gleam/io
 import gleam/list
 import helpers.{cls, focus_element_by_id, get_initials, handle_enter, show_toast}
 import lustre
