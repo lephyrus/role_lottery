@@ -149,11 +149,13 @@ fn assign_all_roles(
   case roles {
     [] -> assignments
     _ -> {
+      let new_assignments = assign_people_once(roles, people, [])
       let remaining_roles = roles |> list.drop(list.length(people))
+
       assign_all_roles(
         remaining_roles,
         people,
-        list.append(assignments, assign_people_once(roles, people, [])),
+        list.append(assignments, new_assignments),
       )
     }
   }
