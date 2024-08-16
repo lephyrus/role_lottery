@@ -119,20 +119,20 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     )
     UserRequestedAssignment -> {
       let assignments = assign(model.roles, model.people)
-      #(Model(..model, assignments: assignments), effect.none())
+      #(Model(..model, assignments:), effect.none())
     }
     UserRequestedClear -> #(empty_model, effect.none())
     UserRemovedPerson(person) -> {
       let people =
         model.people
         |> list.filter(fn(p) { p != person })
-      #(Model(..model, people: people), effect.none())
+      #(Model(..model, people:), effect.none())
     }
     UserRemovedRole(role) -> {
       let roles =
         model.roles
         |> list.filter(fn(r) { r != role })
-      #(Model(..model, roles: roles), effect.none())
+      #(Model(..model, roles:), effect.none())
     }
   }
 }
