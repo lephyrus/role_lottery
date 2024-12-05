@@ -220,28 +220,7 @@ fn view(model: Model) -> Element(Msg) {
               [element.text("People must be unique.")],
             ),
           ]),
-          html.ul(
-            [class("w-full")],
-            list.map(model.people, fn(person) {
-              html.li([class("my-6 flex items-center gap-4")], [
-                shoelace_ui.avatar([
-                  attribute.attribute("initials", get_initials(person.name)),
-                ]),
-                html.h3([class("text-xl font-light")], [
-                  element.text(person.name),
-                ]),
-                shoelace_ui.button(
-                  [
-                    attribute.attribute("size", "small"),
-                    attribute.attribute("circle", "true"),
-                    attribute.attribute("label", "Remove Person"),
-                    event.on_click(UserRemovedPerson(person)),
-                  ],
-                  [shoelace_ui.icon("x-lg")],
-                ),
-              ])
-            }),
-          ),
+          html.ul([class("w-full")], list.map(model.people, person_card)),
         ]),
         html.section(
           [class("w-full max-w-md h-full flex flex-col items-start")],
@@ -271,50 +250,7 @@ fn view(model: Model) -> Element(Msg) {
             ),
             html.ul(
               [class("w-full")],
-              list.map(model.roles, fn(role) {
-                html.li([class("my-6 flex items-center gap-4")], [
-                  shoelace_ui.card([class("w-full text-sm")], [
-                    html.div(
-                      [
-                        class("flex justify-between"),
-                        attribute.attribute("slot", "header"),
-                      ],
-                      [
-                        html.h3([class("text-xl font-light")], [
-                          element.text(role.name),
-                        ]),
-                        shoelace_ui.button(
-                          [
-                            attribute.attribute("size", "small"),
-                            attribute.attribute("circle", "true"),
-                            attribute.attribute("label", "Remove Role"),
-                            event.on_click(UserRemovedRole(role)),
-                          ],
-                          [shoelace_ui.icon("x-lg")],
-                        ),
-                      ],
-                    ),
-                    case
-                      model.assignments
-                      |> list.find(fn(assignment) { assignment.role == role })
-                    {
-                      Ok(role) ->
-                        html.span([class("flex items-center gap-2")], [
-                          shoelace_ui.avatar([
-                            attribute.attribute(
-                              "initials",
-                              get_initials(role.person.name),
-                            ),
-                            attribute.style([#("--size", "1.5rem")]),
-                          ]),
-                          element.text(role.person.name),
-                        ])
-                      _ ->
-                        html.span([class("italic")], [element.text("Nobody")])
-                    },
-                  ]),
-                ])
-              }),
+              list.map(model.roles, role_card(model.assignments, _)),
             ),
           ],
         ),
@@ -340,6 +276,60 @@ fn view(model: Model) -> Element(Msg) {
         ],
         [element.text("Assign")],
       ),
+    ]),
+  ])
+}
+
+fn person_card(person: Person) -> Element(Msg) {
+  html.li([class("my-6 flex items-center gap-4")], [
+    shoelace_ui.avatar([
+      attribute.attribute("initials", get_initials(person.name)),
+    ]),
+    html.h3([class("text-xl font-light")], [element.text(person.name)]),
+    shoelace_ui.button(
+      [
+        attribute.attribute("size", "small"),
+        attribute.attribute("circle", "true"),
+        attribute.attribute("label", "Remove Person"),
+        event.on_click(UserRemovedPerson(person)),
+      ],
+      [shoelace_ui.icon("x-lg")],
+    ),
+  ])
+}
+
+fn role_card(assignments: List(Assignment), role: Role) -> Element(Msg) {
+  html.li([class("my-6 flex items-center gap-4")], [
+    shoelace_ui.card([class("w-full text-sm")], [
+      html.div(
+        [class("flex justify-between"), attribute.attribute("slot", "header")],
+        [
+          html.h3([class("text-xl font-light")], [element.text(role.name)]),
+          shoelace_ui.button(
+            [
+              attribute.attribute("size", "small"),
+              attribute.attribute("circle", "true"),
+              attribute.attribute("label", "Remove Role"),
+              event.on_click(UserRemovedRole(role)),
+            ],
+            [shoelace_ui.icon("x-lg")],
+          ),
+        ],
+      ),
+      case
+        assignments
+        |> list.find(fn(assignment) { assignment.role == role })
+      {
+        Ok(role) ->
+          html.span([class("flex items-center gap-2")], [
+            shoelace_ui.avatar([
+              attribute.attribute("initials", get_initials(role.person.name)),
+              attribute.style([#("--size", "1.5rem")]),
+            ]),
+            element.text(role.person.name),
+          ])
+        _ -> html.span([class("italic")], [element.text("Nobody")])
+      },
     ]),
   ])
 }
