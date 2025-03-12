@@ -6,18 +6,19 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
+import lustre/server_component
 import shoelace_ui
 
 // MAIN ------------------------------------------------------------------------
 
-pub fn main() {
-  let app = lustre.application(init, update, view)
-  let assert Ok(_) = lustre.start(app, "#app", Nil)
+pub fn app() {
+  lustre.application(init, update, view)
+  // let assert Ok(_) = lustre.start(app, "#app", Nil)
 }
 
 // MODEL -----------------------------------------------------------------------
 
-type Model {
+pub type Model {
   Model(
     people: List(Person),
     new_person: String,
@@ -27,15 +28,15 @@ type Model {
   )
 }
 
-type Person {
+pub type Person {
   Person(name: String)
 }
 
-type Role {
+pub type Role {
   Role(name: String)
 }
 
-type Assignment {
+pub type Assignment {
   Assignment(role: Role, person: Person)
 }
 
@@ -202,6 +203,7 @@ fn view(model: Model) -> Element(Msg) {
                 attribute.placeholder("New Person"),
                 event.on_input(UserEditedNewPerson),
                 event.on_keydown(handle_enter(_, UserAddedPerson, NoOp)),
+                server_component.include(["key"]),
               ],
               [],
             ),
@@ -236,6 +238,7 @@ fn view(model: Model) -> Element(Msg) {
                     attribute.placeholder("New Role"),
                     event.on_input(UserEditedNewRole),
                     event.on_keydown(handle_enter(_, UserAddedRole, NoOp)),
+                    server_component.include(["key"]),
                   ],
                   [],
                 ),

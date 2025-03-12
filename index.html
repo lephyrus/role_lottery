@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="sl-theme-dark">
   <head>
     <meta charset="UTF-8" />
@@ -43,7 +43,7 @@
 
     <!-- Theme  -->
     <style>
-      :root {
+      lustre-server-component {
         --sl-color-primary-50: rgb(254 248 250);
         --sl-color-primary-100: rgb(253 230 239);
         --sl-color-primary-200: rgb(252 211 227);
@@ -59,13 +59,15 @@
         --sl-input-focus-ring-color: var(--sl-focus-ring-color);
       }
 
-      :root {
+      lustre-server-component {
         font-family: Inter, sans-serif;
-        font-feature-settings: "liga" 1, "calt" 1; /* fix for Chrome */
+        font-feature-settings:
+          "liga" 1,
+          "calt" 1; /* fix for Chrome */
         --sl-font-sans: "Inter", sans-serif;
       }
       @supports (font-variation-settings: normal) {
-        :root {
+        lustre-server-component {
           font-family: InterVariable, sans-serif;
           --sl-font-sans: "InterVariable", sans-serif;
         }
@@ -73,12 +75,14 @@
     </style>
 
     <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="app.css" />
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
 
-    <script type="module" src="./priv/static/role_lottery.mjs"></script>
+    <!-- Lustre Server Component -->
+    <script type="module" src="/lustre-server-component.mjs"></script>
   </head>
 
   <body>
-    <div id="app"></div>
+    <lustre-server-component route="/role_lottery"></lustre-server-component>
   </body>
 </html>
