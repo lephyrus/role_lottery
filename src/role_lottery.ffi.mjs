@@ -11,14 +11,17 @@ export function focusElementById(id) {
   }
 }
 
-export function showToast(id) {
-  const element = document.getElementById(id);
-
-  if (element) {
+export async function showToast(id) {
+  try {
+    // if the toast is immediately triggered (i.e. on a decode error),
+    // the alert element has not been rendered yet: let's wait one
+    // animation frame
+    await new Promise(requestAnimationFrame);
+    const element = document.getElementById(id);
     element.toast();
     return new Ok();
-  } else {
-    return new Error(`Could not show toast with id ${id}: not found`);
+  } catch (err) {
+    return new Error(String(err));
   }
 }
 
