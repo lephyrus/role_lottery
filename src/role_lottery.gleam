@@ -1,11 +1,16 @@
+import gleam/io
 import gleam/list
-import helpers.{focus_element_by_id, get_initials, handle_enter, show_toast}
+import gleam/option
+import gleam/uri
+import helpers
 import lustre
 import lustre/attribute.{class}
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
+import model
+import modem
 import shoelace_ui
 
 // MAIN ------------------------------------------------------------------------
@@ -17,38 +22,31 @@ pub fn main() {
 
 // MODEL -----------------------------------------------------------------------
 
-type Model {
-  Model(
-    people: List(Person),
-    new_person: String,
-    roles: List(Role),
-    new_role: String,
-    assignments: List(Assignment),
-  )
-}
-
-type Person {
-  Person(name: String)
-}
-
-type Role {
-  Role(name: String)
-}
-
-type Assignment {
-  Assignment(role: Role, person: Person)
-}
-
-const empty_model = Model(
+const empty_model = model.Model(
   people: [],
   new_person: "",
   roles: [],
   new_role: "",
   assignments: [],
+  decode_error: "",
 )
 
-fn init(_flags) -> #(Model, Effect(Msg)) {
-  #(empty_model, effect.none())
+fn init(_flags) -> #(model.Model, Effect(Msg)) {
+  #(
+    empty_model,
+    effect.from(fn(dispatch) {
+      case modem.initial_uri() {
+        Ok(initial_uri) ->
+          dispatch(
+            OnRouteChange(case uri.path_segments(initial_uri.path) {
+              [] -> ""
+              [first, ..] -> first
+            }),
+          )
+        _ -> dispatch(NoOp)
+      }
+    }),
+  )
 }
 
 // UPDATE ----------------------------------------------------------------------
@@ -61,30 +59,28 @@ pub opaque type Msg {
   UserEditedNewRole(String)
   UserRequestedAssignment
   UserRequestedClear
-  UserRemovedPerson(Person)
-  UserRemovedRole(Role)
+  UserRemovedPerson(model.Person)
+  UserRemovedRole(model.Role)
+  OnRouteChange(String)
 }
 
-fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
+fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
   case msg {
     NoOp -> #(model, effect.none())
     UserAddedPerson -> {
       case model.new_person {
         "" -> #(model, effect.none())
         _ -> {
-          let person = Person(model.new_person)
+          let person = model.Person(model.new_person)
+          let people = model.people |> list.append([person]) |> list.unique
+          let new_model = model.Model(..model, people:, new_person: "")
           #(
-            Model(
-              ..model,
-              people: model.people
-                |> list.append([person])
-                |> list.unique,
-              new_person: "",
-            ),
+            new_model,
             effect.batch([
-              focus_element_by_id("new-person"),
+              reflect_state_in_url(new_model),
+              helpers.focus_element_by_id("new-person"),
               case list.contains(model.people, person) {
-                True -> show_toast("duplicate-person-alert")
+                True -> helpers.show_toast("duplicate-person-alert")
                 False -> effect.none()
               },
             ]),
@@ -93,100 +89,100 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       }
     }
     UserEditedNewPerson(value) -> #(
-      Model(..model, new_person: value),
+      model.Model(..model, new_person: value),
       effect.none(),
     )
     UserAddedRole -> {
       case model.new_role {
         "" -> #(model, effect.none())
         _ -> {
-          let role = Role(model.new_role)
+          let roles = model.roles |> list.append([model.Role(model.new_role)])
+          let new_model = model.Model(..model, roles:, new_role: "")
           #(
-            Model(
-              ..model,
-              roles: model.roles
-                |> list.append([role]),
-              new_role: "",
-            ),
-            focus_element_by_id("new-role"),
+            new_model,
+            effect.batch([
+              reflect_state_in_url(new_model),
+              helpers.focus_element_by_id("new-role"),
+            ]),
           )
         }
       }
     }
     UserEditedNewRole(value) -> #(
-      Model(..model, new_role: value),
+      model.Model(..model, new_role: value),
       effect.none(),
     )
     UserRequestedAssignment -> {
-      let assignments = assign(model.roles, model.people)
-      #(Model(..model, assignments:), effect.none())
+      let assignments = helpers.assign(model.roles, model.people)
+      let new_model = model.Model(..model, assignments:)
+      #(new_model, reflect_state_in_url(new_model))
     }
-    UserRequestedClear -> #(empty_model, effect.none())
+    UserRequestedClear -> #(empty_model, reflect_state_in_url(empty_model))
     UserRemovedPerson(person) -> {
       let people =
         model.people
         |> list.filter(fn(p) { p != person })
-      #(Model(..model, people:), effect.none())
+      let new_model = model.Model(..model, people:)
+      #(new_model, reflect_state_in_url(new_model))
     }
     UserRemovedRole(role) -> {
       let roles =
         model.roles
         |> list.filter(fn(r) { r != role })
-      #(Model(..model, roles:), effect.none())
+      let new_model = model.Model(..model, roles:)
+      #(new_model, reflect_state_in_url(new_model))
+    }
+    OnRouteChange(encoded_state) -> {
+      case encoded_state {
+        "" -> #(model, effect.none())
+        encoded_state -> {
+          case helpers.decode_state(encoded_state) {
+            Ok(#(people, roles, assignments)) -> #(
+              model.Model(
+                ..model,
+                people:,
+                roles:,
+                assignments:,
+                decode_error: "",
+              ),
+              effect.none(),
+            )
+            Error(message) -> {
+              io.print_error(message)
+              #(
+                model.Model(
+                  ..model,
+                  decode_error: "Could not decode state:\n" <> message,
+                ),
+                helpers.show_toast("decode-error-alert"),
+              )
+            }
+          }
+        }
+      }
     }
   }
 }
 
-fn assign(roles: List(Role), people: List(Person)) -> List(Assignment) {
-  assign_all_roles(roles, people, [])
-}
+fn reflect_state_in_url(model: model.Model) -> Effect(Msg) {
+  let encoded =
+    helpers.encode_state(model.people, model.roles, model.assignments)
 
-fn assign_all_roles(
-  roles: List(Role),
-  people: List(Person),
-  assignments: List(Assignment),
-) -> List(Assignment) {
-  case roles {
-    [] -> assignments
-    _ -> {
-      let new_assignments = assign_people_once(roles, people, [])
-      let remaining_roles = roles |> list.drop(list.length(people))
-
-      assign_all_roles(
-        remaining_roles,
-        people,
-        list.append(assignments, new_assignments),
-      )
-    }
-  }
-}
-
-fn assign_people_once(
-  roles: List(Role),
-  people: List(Person),
-  assignments: List(Assignment),
-) -> List(Assignment) {
-  let people = list.shuffle(people)
-
-  case roles, people {
-    [], _ -> assignments
-    _, [] -> assignments
-    [role, ..remaining_roles], [person, ..remaining_people] -> {
-      let assignment = Assignment(role, person)
-      assign_people_once(remaining_roles, remaining_people, [
-        assignment,
-        ..assignments
-      ])
-    }
-  }
+  modem.replace(
+    case encoded {
+      "" -> "/"
+      _ -> encoded
+    },
+    option.None,
+    option.None,
+  )
 }
 
 // VIEW ------------------------------------------------------------------------
 
-fn view(model: Model) -> Element(Msg) {
-  // io.debug(model)
-
+fn view(model: model.Model) -> Element(Msg) {
   html.div([class("h-screen flex flex-col")], [
+    decode_error_alert(model.decode_error),
     html.main(
       [
         class(
@@ -203,7 +199,7 @@ fn view(model: Model) -> Element(Msg) {
                 attribute.value(model.new_person),
                 attribute.placeholder("New Person"),
                 event.on_input(UserEditedNewPerson),
-                event.on_keydown(handle_enter(_, UserAddedPerson, NoOp)),
+                event.on_keydown(helpers.handle_enter(_, UserAddedPerson, NoOp)),
               ],
               [],
             ),
@@ -237,7 +233,11 @@ fn view(model: Model) -> Element(Msg) {
                     attribute.value(model.new_role),
                     attribute.placeholder("New Role"),
                     event.on_input(UserEditedNewRole),
-                    event.on_keydown(handle_enter(_, UserAddedRole, NoOp)),
+                    event.on_keydown(helpers.handle_enter(
+                      _,
+                      UserAddedRole,
+                      NoOp,
+                    )),
                   ],
                   [],
                 ),
@@ -282,10 +282,10 @@ fn view(model: Model) -> Element(Msg) {
   ])
 }
 
-fn person_card(person: Person) -> Element(Msg) {
+fn person_card(person: model.Person) -> Element(Msg) {
   html.li([class("my-6 flex items-center gap-4")], [
     shoelace_ui.avatar([
-      attribute.attribute("initials", get_initials(person.name)),
+      attribute.attribute("initials", helpers.get_initials(person.name)),
     ]),
     html.h3([class("text-xl font-light")], [element.text(person.name)]),
     shoelace_ui.button(
@@ -300,7 +300,10 @@ fn person_card(person: Person) -> Element(Msg) {
   ])
 }
 
-fn role_card(assignments: List(Assignment), role: Role) -> Element(Msg) {
+fn role_card(
+  assignments: List(model.Assignment),
+  role: model.Role,
+) -> Element(Msg) {
   html.li([class("my-6 flex items-center gap-4")], [
     shoelace_ui.card([class("w-full text-sm")], [
       html.div(
@@ -325,7 +328,10 @@ fn role_card(assignments: List(Assignment), role: Role) -> Element(Msg) {
         Ok(role) ->
           html.span([class("flex items-center gap-2")], [
             shoelace_ui.avatar([
-              attribute.attribute("initials", get_initials(role.person.name)),
+              attribute.attribute(
+                "initials",
+                helpers.get_initials(role.person.name),
+              ),
               attribute.style([#("--size", "1.5rem")]),
             ]),
             element.text(role.person.name),
@@ -334,4 +340,14 @@ fn role_card(assignments: List(Assignment), role: Role) -> Element(Msg) {
       },
     ]),
   ])
+}
+
+fn decode_error_alert(error: String) {
+  shoelace_ui.alert(
+    [
+      attribute.id("decode-error-alert"),
+      attribute.attribute("variant", "danger"),
+    ],
+    [element.text(error)],
+  )
 }
