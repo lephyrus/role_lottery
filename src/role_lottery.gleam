@@ -122,7 +122,10 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       let people =
         model.people
         |> list.filter(fn(p) { p != person })
-      let new_model = model.Model(..model, people:)
+      let assignments =
+        model.assignments
+        |> list.filter(fn(a) { a.person != person })
+      let new_model = model.Model(..model, people:, assignments:)
       #(new_model, reflect_state_in_url(new_model))
     }
     UserRemovedRole(role) -> {
