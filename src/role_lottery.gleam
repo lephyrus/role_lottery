@@ -194,40 +194,47 @@ fn view(model: model.Model) -> Element(Msg) {
       ],
       [
         html.section([class("w-full max-w-md h-full flex flex-col items-end")], [
-          html.aside([class("w-full mt-6 flex flex-row items-baseline gap-3")], [
-            shoelace_ui.input(
-              [
-                class("w-full"),
-                attribute.id("new-person"),
-                attribute.value(model.new_person),
-                attribute.placeholder("New Person"),
-                event.on_input(UserEditedNewPerson),
-                event.on_keydown(helpers.handle_enter(_, UserAddedPerson, NoOp)),
-              ],
-              [],
-            ),
-            shoelace_ui.button(
-              [
-                attribute.disabled(model.new_person == ""),
-                event.on_click(UserAddedPerson),
-              ],
-              [element.text("Add")],
-            ),
-            shoelace_ui.alert(
-              [
-                attribute.id("duplicate-person-alert"),
-                attribute.attribute("variant", "warning"),
-              ],
-              [element.text("People must be unique.")],
-            ),
-          ]),
+          html.aside(
+            [class("w-full mt-10 flex flex-row items-baseline gap-3")],
+            [
+              shoelace_ui.input(
+                [
+                  class("w-full"),
+                  attribute.id("new-person"),
+                  attribute.value(model.new_person),
+                  attribute.placeholder("New Person"),
+                  event.on_input(UserEditedNewPerson),
+                  event.on_keydown(helpers.handle_enter(
+                    _,
+                    UserAddedPerson,
+                    NoOp,
+                  )),
+                ],
+                [],
+              ),
+              shoelace_ui.button(
+                [
+                  attribute.disabled(model.new_person == ""),
+                  event.on_click(UserAddedPerson),
+                ],
+                [element.text("Add")],
+              ),
+              shoelace_ui.alert(
+                [
+                  attribute.id("duplicate-person-alert"),
+                  attribute.attribute("variant", "warning"),
+                ],
+                [element.text("People must be unique.")],
+              ),
+            ],
+          ),
           html.ul([class("w-full")], list.map(model.people, person_card)),
         ]),
         html.section(
           [class("w-full max-w-md h-full flex flex-col items-start")],
           [
             html.aside(
-              [class("w-full mt-6 flex flex-row items-baseline gap-3")],
+              [class("w-full mt-10 flex flex-row items-baseline gap-3")],
               [
                 shoelace_ui.input(
                   [
@@ -261,7 +268,7 @@ fn view(model: model.Model) -> Element(Msg) {
         ),
       ],
     ),
-    html.footer([class("w-full my-6 flex gap-4 justify-center")], [
+    html.footer([class("w-full mt-6 mb-10 flex gap-4 justify-center")], [
       shoelace_ui.button(
         [
           event.on_click(UserRequestedClear),
