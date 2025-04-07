@@ -346,7 +346,7 @@ fn role_card(
             ]),
             element.text(role.person.name),
           ])
-        _ -> html.span([class("italic")], [element.text("Nobody")])
+        _ -> html.span([class("italic leading-6")], [element.text("Nobody")])
       },
     ]),
   ])
