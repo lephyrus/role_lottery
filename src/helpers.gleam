@@ -1,12 +1,15 @@
 import gleam/bit_array
 import gleam/bool
 import gleam/int
-import gleam/javascript/promise
 import gleam/list
 import gleam/result
 import gleam/string
 import lustre/effect.{type Effect}
 import model
+import plinth/browser/document
+import plinth/browser/element
+import plinth/browser/window
+import plinth/javascript/console
 
 // MISC ------------------------------------------------------------------------
 
@@ -20,6 +23,14 @@ pub fn handle_enter(event: String, enter_msg: msg, other_msg: msg) -> msg {
 pub fn get_initials(name: String) -> String {
   name
   |> string.slice(0, 2)
+}
+
+pub fn focus_element_by_id(id: String) -> Effect(msg) {
+  effect.from(fn(_) {
+    document.get_element_by_id(id)
+    |> result.map(element.focus)
+    |> result.unwrap_both()
+  })
 }
 
 // ROLE ASSIGNMENT -------------------------------------------------------------
@@ -282,29 +293,16 @@ fn decode_assignments(
 
 // EXTERNALS -------------------------------------------------------------------
 
-pub fn focus_element_by_id(id: String) -> Effect(msg) {
-  effect.from(fn(_) {
-    case do_focus_element_by_id(id) {
-      Ok(Nil) -> Nil
-      Error(e) -> {
-        do_console_error(e)
-      }
-    }
-  })
-}
-
-@external(javascript, "./role_lottery.ffi.mjs", "focusElementById")
-fn do_focus_element_by_id(_id: String) -> Result(Nil, String) {
-  Ok(Nil)
-}
-
 pub fn show_toast(id: String) -> Effect(msg) {
   effect.from(fn(_) {
     {
-      use res <- promise.tap(do_show_toast(id))
-      case res {
+      // if the toast is immediately triggered (i.e. on a decode error),
+      // the alert element has not been rendered yet: let's wait one
+      // animation frame
+      use _ <- window.request_animation_frame
+      case document.get_element_by_id(id) |> result.map(do_show_toast) {
         Error(e) -> {
-          do_console_error(e)
+          console.error(e)
         }
         _ -> Nil
       }
@@ -314,11 +312,4 @@ pub fn show_toast(id: String) -> Effect(msg) {
 }
 
 @external(javascript, "./role_lottery.ffi.mjs", "showToast")
-fn do_show_toast(_id: String) -> promise.Promise(Result(Nil, String))
-
-pub fn console_error(msg: String) -> Effect(msg) {
-  effect.from(fn(_) { do_console_error(msg) })
-}
-
-@external(javascript, "./role_lottery.ffi.mjs", "consoleError")
-fn do_console_error(_msg: String) -> Nil
+fn do_show_toast(element: element.Element) -> Result(Nil, String)
