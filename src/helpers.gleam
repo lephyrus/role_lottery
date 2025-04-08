@@ -1,11 +1,13 @@
 import gleam/bit_array
 import gleam/bool
 import gleam/int
+import gleam/javascript/promise
 import gleam/list
 import gleam/result
 import gleam/string
 import lustre/effect.{type Effect}
 import model
+import plinth/browser/clipboard
 import plinth/browser/document
 import plinth/browser/element
 import plinth/browser/window
@@ -31,6 +33,22 @@ pub fn focus_element_by_id(id: String) -> Effect(msg) {
     |> result.map(element.focus)
     |> result.unwrap_both()
   })
+}
+
+pub fn copy_url_to_clipboard(success_msg: msg, error_msg: msg) -> Effect(msg) {
+  use dispatch <- effect.from
+  {
+    use result <- promise.map(window.location() |> clipboard.write_text())
+    case result {
+      Ok(_) -> {
+        dispatch(success_msg)
+      }
+      Error(_) -> {
+        dispatch(error_msg)
+      }
+    }
+  }
+  Nil
 }
 
 // ROLE ASSIGNMENT -------------------------------------------------------------

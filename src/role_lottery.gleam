@@ -29,6 +29,7 @@ const empty_model = model.Model(
   new_role: "",
   assignments: [],
   decode_error: "",
+  clipboard_write_success: False,
 )
 
 fn init(_flags) -> #(model.Model, Effect(Msg)) {
@@ -61,6 +62,9 @@ pub opaque type Msg {
   UserRequestedClear
   UserRemovedPerson(model.Person)
   UserRemovedRole(model.Role)
+  UserSharedUrl
+  BrowserWroteClipboardWithSuccess
+  BrowserWroteClipboardWithError
   OnRouteChange(String)
 }
 
@@ -164,6 +168,21 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
         }
       }
     }
+    UserSharedUrl -> #(
+      model,
+      helpers.copy_url_to_clipboard(
+        BrowserWroteClipboardWithSuccess,
+        BrowserWroteClipboardWithError,
+      ),
+    )
+    BrowserWroteClipboardWithSuccess -> #(
+      model.Model(..model, clipboard_write_success: True),
+      helpers.show_toast("clipboard-alert"),
+    )
+    BrowserWroteClipboardWithError -> #(
+      model.Model(..model, clipboard_write_success: False),
+      helpers.show_toast("clipboard-alert"),
+    )
   }
 }
 
@@ -186,6 +205,7 @@ fn reflect_state_in_url(model: model.Model) -> Effect(Msg) {
 fn view(model: model.Model) -> Element(Msg) {
   html.div([class("h-screen flex flex-col")], [
     decode_error_alert(model.decode_error),
+    clipboard_alert(model.clipboard_write_success),
     html.main(
       [
         class(
@@ -279,6 +299,18 @@ fn view(model: model.Model) -> Element(Msg) {
       ],
     ),
     html.footer([class("w-full mt-6 mb-10 flex gap-4 justify-center")], [
+      shoelace_ui.button(
+        [
+          attribute.disabled(
+            list.is_empty(model.people) && list.is_empty(model.roles),
+          ),
+          event.on_click(UserSharedUrl),
+        ],
+        [
+          shoelace_ui.icon("share")([attribute.attribute("slot", "prefix")]),
+          element.text("Share"),
+        ],
+      ),
       shoelace_ui.button(
         [
           event.on_click(UserRequestedClear),
@@ -375,5 +407,24 @@ fn decode_error_alert(error: String) {
       attribute.attribute("variant", "danger"),
     ],
     [element.text(error)],
+  )
+}
+
+fn clipboard_alert(success: Bool) {
+  shoelace_ui.alert(
+    [
+      attribute.id("clipboard-alert"),
+      attribute.attribute("variant", case success {
+        True -> "success"
+        False -> "danger"
+      }),
+    ],
+    [
+      shoelace_ui.icon("check-lg")([attribute.attribute("slot", "prefix")]),
+      case success {
+        True -> element.text("Link copied to clipboard!")
+        False -> element.text("Failed to copy link to clipboard.")
+      },
+    ],
   )
 }

@@ -6,6 +6,7 @@ pub type Model {
     new_role: String,
     assignments: List(Assignment),
     decode_error: String,
+    clipboard_write_success: Bool,
   )
 }
 
