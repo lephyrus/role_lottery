@@ -217,7 +217,12 @@ fn view(model: model.Model) -> Element(Msg) {
                   attribute.disabled(model.new_person == ""),
                   event.on_click(UserAddedPerson),
                 ],
-                [element.text("Add")],
+                [
+                  shoelace_ui.icon("plus-lg")([
+                    attribute.attribute("slot", "prefix"),
+                  ]),
+                  element.text("Add"),
+                ],
               ),
               shoelace_ui.alert(
                 [
@@ -256,7 +261,12 @@ fn view(model: model.Model) -> Element(Msg) {
                     attribute.disabled(model.new_role == ""),
                     event.on_click(UserAddedRole),
                   ],
-                  [element.text("Add")],
+                  [
+                    shoelace_ui.icon("plus-lg")([
+                      attribute.attribute("slot", "prefix"),
+                    ]),
+                    element.text("Add"),
+                  ],
                 ),
               ],
             ),
@@ -276,7 +286,10 @@ fn view(model: model.Model) -> Element(Msg) {
             list.is_empty(model.people) && list.is_empty(model.roles),
           ),
         ],
-        [element.text("Clear")],
+        [
+          shoelace_ui.icon("trash")([attribute.attribute("slot", "prefix")]),
+          element.text("Clear"),
+        ],
       ),
       shoelace_ui.button(
         [
@@ -286,7 +299,10 @@ fn view(model: model.Model) -> Element(Msg) {
           ),
           event.on_click(UserRequestedAssignment),
         ],
-        [element.text("Assign")],
+        [
+          shoelace_ui.icon("shuffle")([attribute.attribute("slot", "prefix")]),
+          element.text("Assign"),
+        ],
       ),
     ]),
   ])
@@ -305,7 +321,7 @@ fn person_card(person: model.Person) -> Element(Msg) {
         attribute.attribute("label", "Remove Person"),
         event.on_click(UserRemovedPerson(person)),
       ],
-      [shoelace_ui.icon("x-lg")],
+      [shoelace_ui.icon("x-lg")([])],
     ),
   ])
 }
@@ -327,7 +343,7 @@ fn role_card(
               attribute.attribute("label", "Remove Role"),
               event.on_click(UserRemovedRole(role)),
             ],
-            [shoelace_ui.icon("x-lg")],
+            [shoelace_ui.icon("x-lg")([])],
           ),
         ],
       ),

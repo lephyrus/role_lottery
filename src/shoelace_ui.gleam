@@ -61,13 +61,16 @@ pub fn card(
   element("sl-card", attrs, children)
 }
 
-pub fn icon(name: String) -> Element(msg) {
-  element(
-    "sl-icon",
-    [
-      attribute.attribute("name", name),
-      attribute.attribute("library", "default"),
-    ],
-    [],
-  )
+pub fn icon(name: String) -> fn(List(Attribute(msg))) -> Element(msg) {
+  fn(attrs: List(Attribute(msg))) {
+    element(
+      "sl-icon",
+      [
+        attribute.attribute("name", name),
+        attribute.attribute("library", "default"),
+        ..attrs
+      ],
+      [],
+    )
+  }
 }
