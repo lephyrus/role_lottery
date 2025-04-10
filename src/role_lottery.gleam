@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option
@@ -371,9 +372,17 @@ fn role_card(
   html.li([class("my-6 flex items-center gap-4")], [
     shoelace_ui.card([class("w-full text-sm")], [
       html.div(
-        [class("flex justify-between"), attribute.attribute("slot", "header")],
+        [
+          class("flex justify-between items-center"),
+          attribute.attribute("slot", "header"),
+        ],
         [
           html.h3([class("text-xl font-light")], [element.text(role.name)]),
+          shoelace_ui.tooltip([attribute.content("Number of Slots")], [
+            shoelace_ui.slot_selector([
+              attribute.value(int.to_string(role.slots)),
+            ]),
+          ]),
           shoelace_ui.button(
             [
               attribute.attribute("size", "small"),
