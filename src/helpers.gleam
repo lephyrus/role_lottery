@@ -115,8 +115,8 @@ pub fn encode_state(
 ) -> String {
   let indexed_people = people |> list.index_map(fn(p, i) { #(p, i) })
   let indexed_roles = roles |> list.index_map(fn(r, i) { #(r, i) })
-  let encoded_people = encode_people(indexed_people)
-  let encoded_roles = encode_roles(indexed_roles)
+  let encoded_people = encode_people(people)
+  let encoded_roles = encode_roles(roles)
   let encoded_assignments =
     encode_assignments(assignments, indexed_people, indexed_roles)
 
@@ -155,16 +155,13 @@ pub fn decode_state(
 
   case string.split(state_string, level_1_separator) {
     [encoded_people, encoded_roles, encoded_assignments] -> {
-      use indexed_people <- result.try(decode_people(encoded_people))
-      use indexed_roles <- result.try(decode_roles(encoded_roles))
+      let people = decode_people(encoded_people)
+      use roles <- result.try(decode_roles(encoded_roles))
       use assignments <- result.try(decode_assignments(
         encoded_assignments,
-        indexed_people,
-        indexed_roles,
+        people,
+        roles,
       ))
-
-      let people = indexed_people |> list.map(fn(p) { p.0 })
-      let roles = indexed_roles |> list.map(fn(r) { r.0 })
 
       Ok(#(people, roles, assignments))
     }
@@ -172,57 +169,42 @@ pub fn decode_state(
   }
 }
 
-pub fn encode_people(indexed_people: List(#(model.Person, Int))) -> String {
-  indexed_people
-  |> list.map(fn(p) {
-    let #(person, index) = p
-    person.name <> level_3_separator <> int.to_string(index)
-  })
+pub fn encode_people(people: List(model.Person)) -> String {
+  people
+  |> list.map(fn(person) { person.name })
   |> string.join(level_2_separator)
 }
 
-fn decode_people(encoded: String) -> Result(List(#(model.Person, Int)), String) {
+fn decode_people(encoded: String) -> List(model.Person) {
   encoded
   |> string.split(level_2_separator)
   |> list.filter(fn(s) { !string.is_empty(s) })
-  |> list.map(string.split(_, level_3_separator))
-  |> list.map(fn(p) {
-    case p {
-      [name, index_str] -> {
-        int.parse(index_str)
-        |> result.map(fn(index) { #(model.Person(name), index) })
-        |> result.map_error(fn(_) {
-          "Could not parse person index: " <> index_str
-        })
-      }
-      _ -> Error("Could not parse encoded person: " <> string.join(p, ", "))
-    }
-  })
-  |> result.all
+  |> list.map(fn(name) { model.Person(name) })
 }
 
-fn encode_roles(indexed_roles: List(#(model.Role, Int))) -> String {
-  indexed_roles
-  |> list.map(fn(r) {
-    let #(role, index) = r
-    role.name <> level_3_separator <> int.to_string(index)
+fn encode_roles(roles: List(model.Role)) -> String {
+  roles
+  |> list.map(fn(role) {
+    role.name <> level_3_separator <> int.to_string(role.slots)
   })
   |> string.join(level_2_separator)
 }
 
-fn decode_roles(encoded: String) -> Result(List(#(model.Role, Int)), String) {
+fn decode_roles(encoded: String) -> Result(List(model.Role), String) {
   encoded
   |> string.split(level_2_separator)
   |> list.filter(fn(s) { !string.is_empty(s) })
   |> list.map(string.split(_, level_3_separator))
   |> list.map(fn(r) {
     case r {
-      [name, index_str] -> {
-        int.parse(index_str)
-        |> result.map(fn(index) { #(model.Role(name), index) })
-        |> result.map_error(fn(_) {
-          "Could not parse role index: " <> index_str
-        })
+      [name, slots_str] -> {
+        use slots <- result.try(
+          int.parse(slots_str)
+          |> result.map_error(fn(_) {
+            "Could not parse role slots: " <> slots_str
+          }),
+        )
+        Ok(model.Role(name, slots))
       }
       _ -> Error("Could not parse encoded role: " <> string.join(r, ", "))
     }
@@ -258,8 +240,8 @@ fn encode_assignments(
 
 fn decode_assignments(
   encoded: String,
-  indexed_people: List(#(model.Person, Int)),
-  indexed_roles: List(#(model.Role, Int)),
+  people: List(model.Person),
+  roles: List(model.Role),
 ) -> Result(List(model.Assignment), String) {
   encoded
   |> string.split(level_2_separator)
@@ -283,14 +265,14 @@ fn decode_assignments(
           ),
         )
         use person <- result.try(
-          indexed_people
+          list.index_map(people, fn(p, i) { #(p, i) })
           |> list.find(fn(p) { p.1 == p_idx })
           |> result.replace_error(
             "Could not find person with index: " <> int.to_string(p_idx),
           ),
         )
         use role <- result.try(
-          indexed_roles
+          list.index_map(roles, fn(r, i) { #(r, i) })
           |> list.find(fn(r) { r.1 == r_idx })
           |> result.replace_error(
             "Could not find role with index: " <> int.to_string(r_idx),

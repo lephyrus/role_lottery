@@ -100,7 +100,8 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       case model.new_role {
         "" -> #(model, effect.none())
         _ -> {
-          let roles = model.roles |> list.append([model.Role(model.new_role)])
+          let roles =
+            model.roles |> list.append([model.Role(model.new_role, 1)])
           let new_model = model.Model(..model, roles:, new_role: "")
           #(
             new_model,

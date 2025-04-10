@@ -15,7 +15,7 @@ pub type Person {
 }
 
 pub type Role {
-  Role(name: String)
+  Role(name: String, slots: Int)
 }
 
 pub type Assignment {
