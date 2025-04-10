@@ -249,7 +249,12 @@ fn view(model: model.Model) -> Element(Msg) {
                   attribute.id("duplicate-person-alert"),
                   attribute.attribute("variant", "warning"),
                 ],
-                [element.text("People must be unique.")],
+                [
+                  shoelace_ui.icon("exclamation-triangle")([
+                    attribute.attribute("slot", "icon"),
+                  ]),
+                  element.text("People must be unique."),
+                ],
               ),
             ],
           ),
@@ -406,7 +411,12 @@ fn decode_error_alert(error: String) {
       attribute.id("decode-error-alert"),
       attribute.attribute("variant", "danger"),
     ],
-    [element.text(error)],
+    [
+      shoelace_ui.icon("exclamation-octagon")([
+        attribute.attribute("slot", "icon"),
+      ]),
+      element.text(error),
+    ],
   )
 }
 
@@ -419,12 +429,21 @@ fn clipboard_alert(success: Bool) {
         False -> "danger"
       }),
     ],
-    [
-      shoelace_ui.icon("check-lg")([attribute.attribute("slot", "prefix")]),
-      case success {
-        True -> element.text("Link copied to clipboard!")
-        False -> element.text("Failed to copy link to clipboard.")
-      },
-    ],
+    case success {
+      True -> {
+        [
+          shoelace_ui.icon("check2-circle")([
+            attribute.attribute("slot", "icon"),
+          ]),
+          element.text("Link copied to clipboard!"),
+        ]
+      }
+      False -> [
+        shoelace_ui.icon("exclamation-octagon")([
+          attribute.attribute("slot", "icon"),
+        ]),
+        element.text("Failed to copy link to clipboard."),
+      ]
+    },
   )
 }
