@@ -74,3 +74,29 @@ pub fn icon(name: String) -> fn(List(Attribute(msg))) -> Element(msg) {
     )
   }
 }
+
+pub fn slot_selector(attrs: List(Attribute(msg))) -> Element(msg) {
+  element(
+    "sl-rating",
+    [
+      attribute.attribute("label", "Slots"),
+      attribute.attribute("max", "3"),
+      attribute.property("getSymbol", fn() {
+        "<sl-icon name=\"person-circle\"></sl-icon>"
+      }),
+      ..attrs
+    ],
+    [],
+  )
+}
+
+pub fn tooltip(
+  attrs: List(Attribute(msg)),
+  children: List(Element(msg)),
+) -> Element(msg) {
+  element(
+    "sl-tooltip",
+    [attribute.attribute("distance", "12"), ..attrs],
+    children,
+  )
+}

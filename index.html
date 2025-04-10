@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="sl-theme-dark">
   <head>
     <meta charset="UTF-8" />
@@ -40,6 +40,14 @@
       type="module"
       src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/input/input.js"
     ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/rating/rating.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/tooltip/tooltip.js"
+    ></script>
 
     <!-- Theme  -->
     <style>
@@ -61,7 +69,9 @@
 
       :root {
         font-family: Inter, sans-serif;
-        font-feature-settings: "liga" 1, "calt" 1; /* fix for Chrome */
+        font-feature-settings:
+          "liga" 1,
+          "calt" 1; /* fix for Chrome */
         --sl-font-sans: "Inter", sans-serif;
       }
       @supports (font-variation-settings: normal) {
