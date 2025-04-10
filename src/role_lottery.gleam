@@ -1,3 +1,5 @@
+import gleam/dynamic/decode
+import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option
@@ -54,13 +56,14 @@ fn init(_flags) -> #(model.Model, Effect(Msg)) {
 pub opaque type Msg {
   NoOp
   UserAddedPerson
-  UserEditedNewPerson(String)
+  UserEditedNewPersonName(String)
   UserAddedRole
-  UserEditedNewRole(String)
+  UserEditedNewRoleName(String)
   UserRequestedAssignment
   UserRequestedClear
   UserRemovedPerson(model.Person)
   UserRemovedRole(model.Role)
+  UserModifiedRole(model.Role)
   UserSharedUrl
   BrowserWroteClipboardWithSuccess
   BrowserWroteClipboardWithError
@@ -97,8 +100,8 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
         }
       }
     }
-    UserEditedNewPerson(value) -> #(
-      model.Model(..model, new_person: value),
+    UserEditedNewPersonName(name) -> #(
+      model.Model(..model, new_person: name),
       effect.none(),
     )
     UserAddedRole -> {
@@ -111,7 +114,7 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
             |> result.is_ok
           let roles = case is_duplicate {
             True -> model.roles
-            False -> model.roles |> list.append([model.Role(new_role)])
+            False -> model.roles |> list.append([model.Role(new_role, 1)])
           }
           let new_model = model.Model(..model, roles:, new_role: "")
           #(
@@ -134,8 +137,8 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
         }
       }
     }
-    UserEditedNewRole(value) -> #(
-      model.Model(..model, new_role: value),
+    UserEditedNewRoleName(name) -> #(
+      model.Model(..model, new_role: name),
       effect.none(),
     )
     UserRequestedAssignment -> {
@@ -144,21 +147,36 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       #(new_model, reflect_state_in_url(new_model))
     }
     UserRequestedClear -> #(empty_model, reflect_state_in_url(empty_model))
-    UserRemovedPerson(person) -> {
+    UserRemovedPerson(removed_person) -> {
       let people =
         model.people
-        |> list.filter(fn(p) { p != person })
+        |> list.filter(fn(p) { p != removed_person })
       let assignments =
         model.assignments
-        |> list.filter(fn(a) { a.person != person })
+        |> list.filter(fn(a) { a.person != removed_person })
       let new_model = model.Model(..model, people:, assignments:)
       #(new_model, reflect_state_in_url(new_model))
     }
-    UserRemovedRole(role) -> {
+    UserRemovedRole(removed_role) -> {
       let roles =
         model.roles
-        |> list.filter(fn(r) { r != role })
+        |> list.filter(fn(r) { r != removed_role })
       let new_model = model.Model(..model, roles:)
+      #(new_model, reflect_state_in_url(new_model))
+    }
+    UserModifiedRole(modifed_role) -> {
+      let roles =
+        model.roles
+        |> list.map(fn(r) {
+          case r.name == modifed_role.name {
+            True -> modifed_role
+            False -> r
+          }
+        })
+      let assignments =
+        model.assignments
+        |> list.filter(fn(a) { a.role != modifed_role })
+      let new_model = model.Model(..model, roles:, assignments:)
       #(new_model, reflect_state_in_url(new_model))
     }
     OnRouteChange(encoded_state) -> {
@@ -249,7 +267,7 @@ fn view(model: model.Model) -> Element(Msg) {
                   attribute.id("new-person"),
                   attribute.value(model.new_person),
                   attribute.placeholder("New Person"),
-                  event.on_input(UserEditedNewPerson),
+                  event.on_input(UserEditedNewPersonName),
                   event.on_keydown(helpers.handle_enter(
                     _,
                     UserAddedPerson,
@@ -286,7 +304,7 @@ fn view(model: model.Model) -> Element(Msg) {
                     attribute.id("new-role"),
                     attribute.value(model.new_role),
                     attribute.placeholder("New Role"),
-                    event.on_input(UserEditedNewRole),
+                    event.on_input(UserEditedNewRoleName),
                     event.on_keydown(helpers.handle_enter(
                       _,
                       UserAddedRole,
@@ -381,12 +399,27 @@ fn role_card(
   assignments: List(model.Assignment),
   role: model.Role,
 ) -> Element(Msg) {
+  let assignment_matches = assignments |> list.filter(fn(a) { a.role == role })
   html.li([class("my-6 flex items-center gap-4")], [
     shoelace_ui.card([class("w-full text-sm")], [
       html.div(
-        [class("flex justify-between"), attribute.attribute("slot", "header")],
         [
-          html.h3([class("text-xl font-light")], [element.text(role.name)]),
+          class("flex justify-between items-center gap-4"),
+          attribute.attribute("slot", "header"),
+        ],
+        [
+          html.span([class("flex items-center gap-4")], [
+            html.h3([class("text-xl font-light")], [element.text(role.name)]),
+            shoelace_ui.tooltip([attribute.content("Number of Slots")], [
+              shoelace_ui.slot_selector([
+                attribute.value(int.to_string(role.slots)),
+                event.on("sl-change", {
+                  use slots <- decode.subfield(["target", "value"], decode.int)
+                  decode.success(UserModifiedRole(model.Role(..role, slots:)))
+                }),
+              ]),
+            ]),
+          ]),
           shoelace_ui.button(
             [
               attribute.attribute("size", "small"),
@@ -398,23 +431,39 @@ fn role_card(
           ),
         ],
       ),
-      case
-        assignments
-        |> list.find(fn(assignment) { assignment.role == role })
-      {
-        Ok(role) ->
-          html.span([class("flex items-center gap-2")], [
-            shoelace_ui.avatar([
-              attribute.attribute(
-                "initials",
-                helpers.get_initials(role.person.name),
-              ),
-              attribute.style("--size", "1.5rem"),
-            ]),
-            element.text(role.person.name),
-          ])
-        _ -> html.span([class("italic leading-6")], [element.text("Nobody")])
-      },
+      html.ul(
+        [class("flex flex-col gap-4")],
+        role_assignment(assignment_matches, role.slots, []) |> list.reverse,
+      ),
     ]),
   ])
+}
+
+fn role_assignment(
+  assignments: List(model.Assignment),
+  slots: Int,
+  elements: List(Element(Msg)),
+) -> List(Element(Msg)) {
+  case assignments, slots {
+    _, 0 -> elements
+    [], _ ->
+      role_assignment([], slots - 1, [
+        html.li([class("italic leading-6")], [element.text("Nobody")]),
+        ..elements
+      ])
+    [assignment, ..remaining_assignments], _ ->
+      role_assignment(remaining_assignments, slots - 1, [
+        html.li([class("flex items-center gap-2")], [
+          shoelace_ui.avatar([
+            attribute.attribute(
+              "initials",
+              helpers.get_initials(assignment.person.name),
+            ),
+            attribute.style("--size", "1.5rem"),
+          ]),
+          element.text(assignment.person.name),
+        ]),
+        ..elements
+      ])
+  }
 }
