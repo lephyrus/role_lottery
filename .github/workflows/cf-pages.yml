@@ -1,0 +1,39 @@
+name: Deploy Lustre app to Cloudflare Pages
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: "cf-pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          gleam-version: "1.9.1"
+          rebar3-version: "3"
+          # elixir-version: "1.15.4"
+      - run: gleam deps download
+      - run: gleam run -m lustre/dev build
+      - run: git apply ./index-html-dist.patch
+      - run: |
+          mkdir _site
+          cp index.html ./priv/static/*.mjs _site/
+      - name: CF Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy _site --project-name=role-lottery
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
