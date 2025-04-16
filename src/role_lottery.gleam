@@ -187,6 +187,35 @@ fn view(model: Model) -> Element(Msg) {
   // io.debug(model)
 
   html.div([class("h-screen flex flex-col")], [
+    shoelace_ui.alert(
+      [
+        attribute.property("open", True),
+        attribute.property("closable", False),
+        attribute.attribute("duration", "Infinity"),
+        attribute.attribute("variant", "warning"),
+      ],
+      [
+        shoelace_ui.icon("exclamation-triangle", [
+          attribute.attribute("slot", "icon"),
+        ]),
+        html.strong([class("text-lg")], [
+          element.text("Role Lottery has moved!"),
+        ]),
+        html.br([]),
+        html.p([class("text-base")], [
+          element.text("Please visit "),
+          html.a(
+            [
+              class("text-[var(--sl-color-primary-500)]"),
+              attribute.href("https://role-lottery.pages.dev"),
+              attribute.target("_blank"),
+            ],
+            [element.text("https://role-lottery.pages.dev")],
+          ),
+          element.text(" for the latest version."),
+        ]),
+      ],
+    ),
     html.main(
       [
         class(
@@ -295,7 +324,7 @@ fn person_card(person: Person) -> Element(Msg) {
         attribute.attribute("label", "Remove Person"),
         event.on_click(UserRemovedPerson(person)),
       ],
-      [shoelace_ui.icon("x-lg")],
+      [shoelace_ui.icon("x-lg", [])],
     ),
   ])
 }
@@ -314,7 +343,7 @@ fn role_card(assignments: List(Assignment), role: Role) -> Element(Msg) {
               attribute.attribute("label", "Remove Role"),
               event.on_click(UserRemovedRole(role)),
             ],
-            [shoelace_ui.icon("x-lg")],
+            [shoelace_ui.icon("x-lg", [])],
           ),
         ],
       ),
