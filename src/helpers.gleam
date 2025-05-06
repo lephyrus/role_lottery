@@ -100,6 +100,12 @@ fn assign_people_once(
   }
 }
 
+fn multiply_roles_by_slots(roles: List(model.Role)) -> List(model.Role) {
+  roles
+  |> list.map(fn(role) { list.repeat(role, role.slots) })
+  |> list.flatten
+}
+
 // ENCODE / DECODE STATE -------------------------------------------------------
 
 const level_1_separator = "‖"

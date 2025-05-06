@@ -1,7 +1,9 @@
+import gleam/dynamic
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option
+import gleam/result
 import gleam/uri
 import helpers
 import lustre
@@ -63,6 +65,7 @@ pub opaque type Msg {
   UserRequestedClear
   UserRemovedPerson(model.Person)
   UserRemovedRole(model.Role)
+  UserModifiedRole(model.Role)
   UserSharedUrl
   BrowserWroteClipboardWithSuccess
   BrowserWroteClipboardWithError
@@ -138,6 +141,14 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       let roles =
         model.roles
         |> list.filter(fn(r) { r != role })
+      let new_model = model.Model(..model, roles:)
+      #(new_model, reflect_state_in_url(new_model))
+    }
+    UserModifiedRole(role) -> {
+      let roles =
+        model.roles
+        |> list.filter(fn(r) { r.name != role.name })
+        |> list.prepend(role)
       let new_model = model.Model(..model, roles:)
       #(new_model, reflect_state_in_url(new_model))
     }
@@ -382,6 +393,19 @@ fn role_card(
             shoelace_ui.tooltip([attribute.content("Number of Slots")], [
               shoelace_ui.slot_selector([
                 attribute.value(int.to_string(role.slots)),
+                event.on("sl-change", fn(event) {
+                  event
+                  |> event.value
+                  |> echo
+                  |> result.try(fn(value) {
+                    let assert Ok(slots) = int.parse(value)
+                    echo slots
+                    Ok(slots)
+                  })
+                  |> result.map(fn(slots) {
+                    UserModifiedRole(model.Role(..role, slots:))
+                  })
+                }),
               ]),
             ]),
           ]),
@@ -398,20 +422,25 @@ fn role_card(
       ),
       case
         assignments
-        |> list.find(fn(assignment) { assignment.role == role })
+        |> list.filter(fn(assignment) { assignment.role == role })
       {
-        Ok(role) ->
-          html.span([class("flex items-center gap-2")], [
-            shoelace_ui.avatar([
-              attribute.attribute(
-                "initials",
-                helpers.get_initials(role.person.name),
-              ),
-              attribute.style([#("--size", "1.5rem")]),
-            ]),
-            element.text(role.person.name),
-          ])
-        _ -> html.span([class("italic leading-6")], [element.text("Nobody")])
+        [] -> html.span([class("italic leading-6")], [element.text("Nobody")])
+        matches ->
+          html.ul(
+            [class("flex flex-col gap-4")],
+            list.map(matches, fn(assignment) {
+              html.span([class("flex items-center gap-2")], [
+                shoelace_ui.avatar([
+                  attribute.attribute(
+                    "initials",
+                    helpers.get_initials(assignment.person.name),
+                  ),
+                  attribute.style([#("--size", "1.5rem")]),
+                ]),
+                element.text(assignment.person.name),
+              ])
+            }),
+          )
       },
     ]),
   ])
