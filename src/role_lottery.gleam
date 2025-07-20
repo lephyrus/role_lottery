@@ -395,7 +395,7 @@ fn role_card(
                 "initials",
                 helpers.get_initials(role.person.name),
               ),
-              attribute.style([#("--size", "1.5rem")]),
+              attribute.style("--size", "1.5rem"),
             ]),
             element.text(role.person.name),
           ])
