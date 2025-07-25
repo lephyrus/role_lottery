@@ -1,6 +1,7 @@
 import gleam/io
 import gleam/list
 import gleam/option
+import gleam/result
 import gleam/uri
 import helpers
 import lustre
@@ -28,8 +29,6 @@ const empty_model = model.Model(
   roles: [],
   new_role: "",
   assignments: [],
-  decode_error: "",
-  clipboard_write_success: False,
 )
 
 fn init(_flags) -> #(model.Model, Effect(Msg)) {
@@ -84,7 +83,13 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
               reflect_state_in_url(new_model),
               helpers.focus_element_by_id("new-person"),
               case list.contains(model.people, person) {
-                True -> helpers.show_toast("duplicate-person-alert")
+                True ->
+                  helpers.notify(
+                    "People must be unique.",
+                    "warning",
+                    "exclamation-triangle",
+                    5000,
+                  )
                 False -> effect.none()
               },
             ]),
@@ -99,14 +104,31 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
     UserAddedRole -> {
       case model.new_role {
         "" -> #(model, effect.none())
-        _ -> {
-          let roles = model.roles |> list.append([model.Role(model.new_role)])
+        new_role -> {
+          let is_duplicate =
+            model.roles
+            |> list.find(fn(r) { r.name == new_role })
+            |> result.is_ok
+          let roles = case is_duplicate {
+            True -> model.roles
+            False -> model.roles |> list.append([model.Role(new_role)])
+          }
           let new_model = model.Model(..model, roles:, new_role: "")
           #(
             new_model,
             effect.batch([
               reflect_state_in_url(new_model),
               helpers.focus_element_by_id("new-role"),
+              case is_duplicate {
+                True ->
+                  helpers.notify(
+                    "Roles must be unique.",
+                    "warning",
+                    "exclamation-triangle",
+                    5000,
+                  )
+                False -> effect.none()
+              },
             ]),
           )
         }
@@ -145,23 +167,19 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
         encoded_state -> {
           case helpers.decode_state(encoded_state) {
             Ok(#(people, roles, assignments)) -> #(
-              model.Model(
-                ..model,
-                people:,
-                roles:,
-                assignments:,
-                decode_error: "",
-              ),
+              model.Model(..model, people:, roles:, assignments:),
               effect.none(),
             )
             Error(message) -> {
               io.print_error(message)
               #(
-                model.Model(
-                  ..model,
-                  decode_error: "Could not decode state:\n" <> message,
+                model,
+                helpers.notify(
+                  "Could not decode state:\n" <> message,
+                  "danger",
+                  "exclamation-octagon",
+                  5000,
                 ),
-                helpers.show_toast("decode-error-alert"),
               )
             }
           }
@@ -176,12 +194,22 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       ),
     )
     BrowserWroteClipboardWithSuccess -> #(
-      model.Model(..model, clipboard_write_success: True),
-      helpers.show_toast("clipboard-alert"),
+      model,
+      helpers.notify(
+        "Link copied to clipboard!",
+        "success",
+        "check2-circle",
+        5000,
+      ),
     )
     BrowserWroteClipboardWithError -> #(
-      model.Model(..model, clipboard_write_success: False),
-      helpers.show_toast("clipboard-alert"),
+      model,
+      helpers.notify(
+        "Failed to copy link to clipboard.",
+        "danger",
+        "exclamation-octagon",
+        5000,
+      ),
     )
   }
 }
@@ -204,8 +232,6 @@ fn reflect_state_in_url(model: model.Model) -> Effect(Msg) {
 
 fn view(model: model.Model) -> Element(Msg) {
   html.div([class("h-screen flex flex-col")], [
-    decode_error_alert(model.decode_error),
-    clipboard_alert(model.clipboard_write_success),
     html.main(
       [
         class(
@@ -242,18 +268,6 @@ fn view(model: model.Model) -> Element(Msg) {
                     attribute.attribute("slot", "prefix"),
                   ]),
                   element.text("Add"),
-                ],
-              ),
-              shoelace_ui.alert(
-                [
-                  attribute.id("duplicate-person-alert"),
-                  attribute.attribute("variant", "warning"),
-                ],
-                [
-                  shoelace_ui.icon("exclamation-triangle")([
-                    attribute.attribute("slot", "icon"),
-                  ]),
-                  element.text("People must be unique."),
                 ],
               ),
             ],
@@ -403,47 +417,4 @@ fn role_card(
       },
     ]),
   ])
-}
-
-fn decode_error_alert(error: String) {
-  shoelace_ui.alert(
-    [
-      attribute.id("decode-error-alert"),
-      attribute.attribute("variant", "danger"),
-    ],
-    [
-      shoelace_ui.icon("exclamation-octagon")([
-        attribute.attribute("slot", "icon"),
-      ]),
-      element.text(error),
-    ],
-  )
-}
-
-fn clipboard_alert(success: Bool) {
-  shoelace_ui.alert(
-    [
-      attribute.id("clipboard-alert"),
-      attribute.attribute("variant", case success {
-        True -> "success"
-        False -> "danger"
-      }),
-    ],
-    case success {
-      True -> {
-        [
-          shoelace_ui.icon("check2-circle")([
-            attribute.attribute("slot", "icon"),
-          ]),
-          element.text("Link copied to clipboard!"),
-        ]
-      }
-      False -> [
-        shoelace_ui.icon("exclamation-octagon")([
-          attribute.attribute("slot", "icon"),
-        ]),
-        element.text("Failed to copy link to clipboard."),
-      ]
-    },
-  )
 }

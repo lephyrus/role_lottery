@@ -11,7 +11,6 @@ import plinth/browser/clipboard
 import plinth/browser/document
 import plinth/browser/element
 import plinth/browser/window
-import plinth/javascript/console
 
 // MISC ------------------------------------------------------------------------
 
@@ -311,23 +310,22 @@ fn decode_assignments(
 
 // EXTERNALS -------------------------------------------------------------------
 
-pub fn show_toast(id: String) -> Effect(msg) {
+pub fn notify(
+  message: String,
+  variant: String,
+  icon: String,
+  duration: Int,
+) -> Effect(msg) {
   effect.from(fn(_) {
-    {
-      // if the toast is immediately triggered (i.e. on a decode error),
-      // the alert element has not been rendered yet: let's wait one
-      // animation frame
-      use _ <- window.request_animation_frame
-      case document.get_element_by_id(id) |> result.map(do_show_toast) {
-        Error(e) -> {
-          console.error(e)
-        }
-        _ -> Nil
-      }
-    }
+    do_notify(message, variant, icon, duration)
     Nil
   })
 }
 
-@external(javascript, "./role_lottery.ffi.mjs", "showToast")
-fn do_show_toast(element: element.Element) -> Result(Nil, String)
+@external(javascript, "./role_lottery.ffi.mjs", "notify")
+fn do_notify(
+  message: String,
+  variant: String,
+  icon: String,
+  duration: Int,
+) -> Nil
