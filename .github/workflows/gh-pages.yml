@@ -31,7 +31,7 @@ jobs:
           rebar3-version: "3"
       - run: gleam deps download
       - run: gleam run -m lustre/dev add tailwind
-      - run: gleam run -m lustre/dev build
+      - run: gleam run -m lustre/dev build app --minify
       - run: git apply ./index-html-dist.patch
       - run: |
           mkdir _site

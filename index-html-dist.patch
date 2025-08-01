@@ -8,8 +8,8 @@ index d828468..fd6a828 100644
  
 -    <link rel="stylesheet" href="./priv/static/role_lottery.css"></link>
 -    <script type="module" src="./priv/static/role_lottery.mjs"></script>
-+    <link rel="stylesheet" href="./role_lottery.css"></link>
-+    <script type="module" src="./role_lottery.mjs"></script>
++    <link rel="stylesheet" href="./role_lottery.min.css"></link>
++    <script type="module" src="./role_lottery.min.mjs"></script>
    </head>
  
    <body>
