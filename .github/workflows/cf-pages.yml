@@ -24,11 +24,12 @@ jobs:
           gleam-version: "1.11.1"
           rebar3-version: "3"
       - run: gleam deps download
+      - run: gleam run -m lustre/dev add tailwind
       - run: gleam run -m lustre/dev build
       - run: git apply ./index-html-dist.patch
       - run: |
           mkdir _site
-          cp index.html ./priv/static/*.mjs _site/
+          cp index.html ./priv/static/* _site/
       - name: CF Deploy
         uses: cloudflare/wrangler-action@v3
         with:
