@@ -5,8 +5,6 @@ pub type Model {
     roles: List(Role),
     new_role: String,
     assignments: List(Assignment),
-    decode_error: String,
-    clipboard_write_success: Bool,
   )
 }
 
@@ -15,7 +13,7 @@ pub type Person {
 }
 
 pub type Role {
-  Role(name: String)
+  Role(name: String, slots: Int)
 }
 
 pub type Assignment {
