@@ -13,41 +13,79 @@
     <!-- Shoelace -->
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/themes/dark.css"
+      href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/dark.css"
     />
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/alert/alert.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/avatar/avatar.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/button/button.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/card/card.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/icon/icon.js"
-      data-shoelace="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/dist"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/input/input.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/rating/rating.js"
-    ></script>
-    <script
-      type="module"
-      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.1/cdn/components/tooltip/tooltip.js"
-    ></script>
+    <script type="module" data-shoelace="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/dist">
+      // the `data-shoelace` attribute above is required for the icons to be loaded from the correct URL
+      const shoelaceVersion = "2.20.1";
+      const components = [
+        "alert",
+        "avatar",
+        "button",
+        "card",
+        "icon",
+        "input",
+        "rating",
+        "tooltip"
+      ];
+
+      // mechanism to avoid "flash of undefined custom elements"
+      // see: https://www.abeautifulsite.net/posts/revisiting-fouce
+
+      // hide everything
+      document.documentElement.style.opacity = 0;
+      await Promise.race([
+        // wait until all components are available (or have failed loading)
+        loadShoelaceComponents(shoelaceVersion),
+        // ...or at most 1 second
+        new Promise((resolve) => setTimeout(resolve, 1000))
+      ]);
+      // ... then extend the rating component (but don't wait on that)
+      extendRatingComponent();
+      // ... then make the page visible
+      document.documentElement.style.opacity = null;
+
+      function loadShoelaceComponents(version) {
+        const cdnHost = "https://cdn.jsdelivr.net";
+        const shoelacePath = "/npm/@shoelace-style/shoelace";
+        const baseUrl = `${cdnHost}${shoelacePath}@${version}`;
+        const componentsPath = "/cdn/components/";
+        const esmPath = "/+esm"
+
+        const importPromises = components.map((component) =>
+          import(`${baseUrl}${componentsPath}${component}/${component}.js${esmPath}`)
+        )
+
+        return Promise.allSettled(importPromises);
+      }
+
+      async function extendRatingComponent() {
+        // The Shoelace rating component has this weird `getSymbol` API, where the
+        // property has to be set to a function that returns an HTML string used for
+        // the rating icon. It's not possible to do this is Lustre, but we do want
+        // Lustre to manage the element, so we extend the element and set the property
+        // here.
+
+        await Promise.race([
+          // wait until the Shoelace rating component has been registered
+          customElements.whenDefined("sl-rating"),
+          // ... or at most 10 seconds
+          new Promise((resolve) => setTimeout(resolve, 10000))
+        ])
+        const Rating = customElements.get("sl-rating");
+        if (!Rating) {
+          console.warn("Shoelace rating component not available, app not fully functional.");
+        } else {
+          class SlotRating extends Rating {
+            constructor() {
+              super();
+              this.getSymbol = () => '<sl-icon name="person-circle"></sl-icon>';
+            }
+          }
+          customElements.define("sl-slot-rating", SlotRating);
+        }
+      }
+    </script>
 
     <!-- Theme  -->
     <style>
