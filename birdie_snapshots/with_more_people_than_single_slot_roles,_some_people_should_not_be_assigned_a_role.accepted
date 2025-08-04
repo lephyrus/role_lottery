@@ -1,0 +1,16 @@
+---
+version: 1.3.2
+title: With more people than single-slot roles, some people should not be assigned a role.
+file: ./test/role_lottery_test.gleam
+test_name: assign_more_people_to_single_slot_roles_test
+---
+╭─────────┬────────────────┬─────────────┬───────────────╮
+│         │ Number One (1) │ Captain (1) │ Counselor (1) │
+├─────────┼────────────────┼─────────────┼───────────────┤
+│ Picard  │                │      ✓      │               │
+│ Riker   │       ✓        │             │               │
+│ Crusher │                │             │               │
+│ Troi    │                │             │       ✓       │
+│ Data    │                │             │               │
+│ Worf    │                │             │               │
+╰─────────┴────────────────┴─────────────┴───────────────╯

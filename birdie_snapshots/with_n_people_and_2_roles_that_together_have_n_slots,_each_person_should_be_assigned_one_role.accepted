@@ -1,0 +1,16 @@
+---
+version: 1.3.2
+title: With N people and 2 roles that together have N slots, each person should be assigned one role.
+file: ./test/role_lottery_test.gleam
+test_name: assign_n_people_to_multiple_roles_with_n_slots_overall_test
+---
+╭────────┬───────────┬───────────╮
+│        │ White (2) │ Black (4) │
+├────────┼───────────┼───────────┤
+│ Pawn   │     ✓     │           │
+│ Bishop │     ✓     │           │
+│ Knight │           │     ✓     │
+│ Rook   │           │     ✓     │
+│ Queen  │           │     ✓     │
+│ King   │           │     ✓     │
+╰────────┴───────────┴───────────╯

@@ -1,0 +1,12 @@
+---
+version: 1.3.2
+title: With 2 people and 7 roles, one person should be assigned to 4 roles, and one person to 3 roles.
+file: ./test/role_lottery_test.gleam
+test_name: assign_people_to_more_single_slot_roles_test
+---
+╭───────┬─────────────┬───────────┬────────────┬──────────────┬───────────────┬────────────┬───────────╮
+│       │ Teacher (1) │ Nurse (1) │ Farmer (1) │ Mechanic (1) │ Librarian (1) │ Barber (1) │ Mayor (1) │
+├───────┼─────────────┼───────────┼────────────┼──────────────┼───────────────┼────────────┼───────────┤
+│ Laura │      ✓      │           │     ✓      │              │               │     ✓      │     ✓     │
+│ Sean  │             │     ✓     │            │      ✓       │       ✓       │            │           │
+╰───────┴─────────────┴───────────┴────────────┴──────────────┴───────────────┴────────────┴───────────╯
