@@ -3,6 +3,7 @@ import gleam/bool
 import gleam/int
 import gleam/javascript/promise
 import gleam/list
+import gleam/order
 import gleam/result
 import gleam/string
 import lustre/effect.{type Effect}
@@ -83,7 +84,7 @@ fn assign_all(
       assign_all(
         remaining_roles,
         people,
-        list.append(assignments, new_assignments),
+        list.append(assignments, new_assignments |> list.sort(by_person_name)),
       )
     }
   }
@@ -123,6 +124,13 @@ fn fill_slots(
       }
     }
   }
+}
+
+fn by_person_name(
+  first: model.Assignment,
+  second: model.Assignment,
+) -> order.Order {
+  string.compare(first.person.name, second.person.name)
 }
 
 // ENCODE / DECODE STATE -------------------------------------------------------
