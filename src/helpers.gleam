@@ -3,6 +3,7 @@ import gleam/bool
 import gleam/int
 import gleam/javascript/promise
 import gleam/list
+import gleam/order
 import gleam/result
 import gleam/string
 import lustre/effect.{type Effect}
@@ -11,6 +12,8 @@ import plinth/browser/clipboard
 import plinth/browser/document
 import plinth/browser/element
 import plinth/browser/window
+import prng/random
+import prng/seed
 
 // MISC ------------------------------------------------------------------------
 
@@ -55,11 +58,25 @@ pub fn copy_url_to_clipboard(success_msg: msg, error_msg: msg) -> Effect(msg) {
 pub fn assign(
   roles: List(model.Role),
   people: List(model.Person),
+  seed: seed.Seed,
 ) -> List(model.Assignment) {
   case roles, people {
     [], _ -> []
     _, [] -> []
-    _, _ -> assign_all(list.shuffle(roles), list.shuffle(people), [])
+    _, _ -> {
+      let #(roles, seed) = roles |> shuffle(seed)
+      let #(people, _) = people |> shuffle(seed)
+      assign_all(roles, people, [])
+    }
+  }
+}
+
+fn shuffle(elements: List(a), seed: seed.Seed) -> #(List(a), seed.Seed) {
+  case elements |> list.permutations {
+    [] -> #([], seed)
+    [first, ..rest] -> {
+      random.uniform(first, rest) |> random.step(seed)
+    }
   }
 }
 
@@ -83,7 +100,7 @@ fn assign_all(
       assign_all(
         remaining_roles,
         people,
-        list.append(assignments, new_assignments),
+        list.append(assignments, new_assignments |> list.sort(by_person_name)),
       )
     }
   }
@@ -123,6 +140,13 @@ fn fill_slots(
       }
     }
   }
+}
+
+fn by_person_name(
+  first: model.Assignment,
+  second: model.Assignment,
+) -> order.Order {
+  string.compare(first.person.name, second.person.name)
 }
 
 // ENCODE / DECODE STATE -------------------------------------------------------

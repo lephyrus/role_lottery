@@ -1,0 +1,14 @@
+---
+version: 1.3.2
+title: With multiple people and one single-slot role, one person should be assigned to the role.
+file: ./test/role_lottery_test.gleam
+test_name: assign_people_to_one_single_slot_role_test
+---
+╭────────┬─────────────────╮
+│        │ Team Leader (1) │
+├────────┼─────────────────┤
+│ Mark   │        ✓        │
+│ Helly  │                 │
+│ Dylan  │                 │
+│ Irving │                 │
+╰────────┴─────────────────╯

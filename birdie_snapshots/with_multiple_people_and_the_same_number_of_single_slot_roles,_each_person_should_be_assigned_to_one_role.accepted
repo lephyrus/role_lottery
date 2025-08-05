@@ -1,0 +1,14 @@
+---
+version: 1.3.2
+title: With multiple people and the same number of single-slot roles, each person should be assigned to one role.
+file: ./test/role_lottery_test.gleam
+test_name: assign_people_to_single_slot_roles_test
+---
+╭─────────┬─────────────┬───────────────────┬────────────────────┬───────────────────────────╮
+│         │ Captain (1) │ First Officer (1) │ Ship Counselor (1) │ Chief Medical Officer (1) │
+├─────────┼─────────────┼───────────────────┼────────────────────┼───────────────────────────┤
+│ Picard  │      ✓      │                   │                    │                           │
+│ Riker   │             │         ✓         │                    │                           │
+│ Crusher │             │                   │                    │             ✓             │
+│ Troi    │             │                   │         ✓          │                           │
+╰─────────┴─────────────┴───────────────────┴────────────────────┴───────────────────────────╯

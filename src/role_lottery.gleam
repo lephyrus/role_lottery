@@ -14,6 +14,7 @@ import lustre/element/html
 import lustre/event
 import model
 import modem
+import prng/seed
 import shoelace_ui
 
 // MAIN ------------------------------------------------------------------------
@@ -142,7 +143,7 @@ fn update(model: model.Model, msg: Msg) -> #(model.Model, Effect(Msg)) {
       effect.none(),
     )
     UserRequestedAssignment -> {
-      let assignments = helpers.assign(model.roles, model.people)
+      let assignments = helpers.assign(model.roles, model.people, seed.random())
       let new_model = model.Model(..model, assignments:)
       #(new_model, reflect_state_in_url(new_model))
     }

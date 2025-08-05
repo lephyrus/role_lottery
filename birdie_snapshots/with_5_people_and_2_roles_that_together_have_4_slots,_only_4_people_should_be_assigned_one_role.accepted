@@ -1,0 +1,15 @@
+---
+version: 1.3.2
+title: With 5 people and 2 roles that together have 4 slots, only 4 people should be assigned one role.
+file: ./test/role_lottery_test.gleam
+test_name: assign_n_people_to_multiple_roles_with_less_than_n_slots_overall_test
+---
+╭────────┬────────────┬─────────────╮
+│        │ Dishes (3) │ Laundry (1) │
+├────────┼────────────┼─────────────┤
+│ Hewey  │     ✓      │             │
+│ Dewey  │            │             │
+│ Louie  │     ✓      │             │
+│ Donald │            │      ✓      │
+│ Daisy  │     ✓      │             │
+╰────────┴────────────┴─────────────╯

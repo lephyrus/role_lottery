@@ -1,0 +1,11 @@
+---
+version: 1.3.2
+title: With one person and multiple single-slot roles, the person should be assigned to all roles.
+file: ./test/role_lottery_test.gleam
+test_name: assign_one_person_to_single_slot_roles_test
+---
+╭───────┬───────────────┬───────────────────╮
+│       │ Developer (1) │ Product Owner (1) │
+├───────┼───────────────┼───────────────────┤
+│ Susan │       ✓       │         ✓         │
+╰───────┴───────────────┴───────────────────╯
